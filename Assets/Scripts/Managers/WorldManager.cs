@@ -265,7 +265,7 @@ public class WorldManager : MonoSingleton<WorldManager>
             this.canNavigate = canNavigate;
         }
     }
-    public enum TileType { grassTile, rockTile, bridgeTile}
+    public enum TileType { empty, grassTile, rockTile, bridgeTile}
     public enum TileObject { empty, treeDeco, bushDeco, flowerDeco,grassDeco, rockDeco, riverDeco}
 
 }
