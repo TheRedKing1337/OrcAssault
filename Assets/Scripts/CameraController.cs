@@ -12,6 +12,7 @@ public class CameraController : MonoBehaviour
     public float scrollThreshold = 0.01f;   
 
     Vector3 touchStart;
+    private Vector3 oldMousePos;
 
     // Update is called once per frame
     void Update()
@@ -78,7 +79,7 @@ public class CameraController : MonoBehaviour
             {
                 Vector3 direction = touchStart - Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 Vector3 newPos = transform.position + direction;
-                newPos = new Vector3(Mathf.Clamp(newPos.x, 0, WorldManager.Instance.worldSizeX), Mathf.Clamp(newPos.y, 0, WorldManager.Instance.worldSizeY/2), Mathf.Clamp(newPos.z,0,WorldManager.Instance.worldSizeY));
+                newPos = new Vector3(Mathf.Clamp(newPos.x, 0, WorldManager.Instance.worldSizeX), Mathf.Clamp(newPos.y, 0, WorldManager.Instance.worldSizeY / 2), Mathf.Clamp(newPos.z, 0, WorldManager.Instance.worldSizeY));
                 transform.position = newPos;
                 //Vector3 direction = touchStart - Camera.main.ScreenToWorldPoint(Input.mousePosition);
                 //Vector3 newPos = transform.position + direction;
@@ -89,6 +90,18 @@ public class CameraController : MonoBehaviour
             {
                 float newSize = Mathf.Clamp(Camera.main.orthographicSize - (Input.GetAxis("Mouse ScrollWheel") * zoomSens * 100), 2, maxZoom);
                 Camera.main.orthographicSize = newSize;
+            }
+            else if (Input.GetMouseButtonDown(2))
+            {
+                oldMousePos = Input.mousePosition;
+            }
+            else if (Input.GetMouseButton(2))
+            {
+                Vector3 mousePos = Input.mousePosition;
+                float rotationDirection = mousePos.x - oldMousePos.x;
+                transform.Rotate(Vector3.up *rotationDirection * rotateSens);
+
+                oldMousePos = mousePos;
             }
         }
     }

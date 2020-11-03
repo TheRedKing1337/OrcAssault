@@ -24,4 +24,8 @@ public abstract class MonoSingleton<T> : MonoBehaviour where T : MonoSingleton<T
     {
         _instance = this as T;
     }
+    private void OnValidate()
+    {
+        _instance = this as T;
+    }
 }
