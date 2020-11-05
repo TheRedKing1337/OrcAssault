@@ -19,7 +19,7 @@ public class WorldManager : MonoSingleton<WorldManager>
     private GameObject tileObject;
     private GameObject decoObject;
 
-    private GameObject[,] pillars;
+    public GameObject[,] pillars;
     private GameObject[,] decos;
 
     private List<LerpObject> pillarList = new List<LerpObject>();
@@ -123,17 +123,17 @@ public class WorldManager : MonoSingleton<WorldManager>
 
                 GameObject go = Instantiate(Resources.Load(world[x, y].tileType.ToString()), new Vector3(x, 0, y), Quaternion.identity) as GameObject;
                 go.transform.SetParent(tileObject.transform);
-
+                go.name = x + "|" + y;
                 //LerpObject toMove = new LerpObject(go.transform, world[x, y].height);
                 //moveDownList.Add(toMove);
 
-                go.SetActive(false);
-                pillars[x, y] = go;
+                go.transform.GetChild(0).gameObject.SetActive(false);
+                pillars[x, y] = go.transform.GetChild(0).gameObject;
 
                 if (world[x, y].tileObject != Tile.TileObject.empty)
                 {
                     GameObject deco = Instantiate(Resources.Load(world[x, y].tileObject.ToString()), new Vector3(x, world[x, y].height, y), Quaternion.identity) as GameObject;
-                    deco.transform.SetParent(decoObject.transform);
+                    deco.transform.SetParent(go.transform);
 
                     deco.transform.localScale = Vector3.zero;
                     //LerpObject toGrow = new LerpObject(deco.transform, world[x, y].height);

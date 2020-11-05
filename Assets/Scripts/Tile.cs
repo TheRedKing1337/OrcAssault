@@ -21,6 +21,6 @@ public struct Tile
         this.canNavigate = canNavigate;
     }
 
-    public enum TileType { empty, grassTile, rockTile, bridgeTile }
+    public enum TileType { empty, grassTile, rockTile, bridgeTile, riverTile, waterfallTile }
     public enum TileObject { empty, treeDeco, bushDeco, flowerDeco, grassDeco, rockDeco, riverDeco }
 }
