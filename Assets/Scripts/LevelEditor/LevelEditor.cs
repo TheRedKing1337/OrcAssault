@@ -90,6 +90,16 @@ public class LevelEditor : MonoBehaviour
     {
         if (isSettingValues) { return; }
         selectedTile.tileObject = (Tile.TileObject)decoDropdown.value;
+
+        if (selectedTileObj.transform.childCount > 1)
+        {
+            Destroy(selectedTileObj.transform.GetChild(1).gameObject);
+        }
+
+        if(selectedTile.tileObject == Tile.TileObject.empty){ return; }
+
+        GameObject go = Instantiate(Resources.Load(selectedTile.tileObject.ToString()), new Vector3(selectedPos.x, selectedTile.height, selectedPos.y), Quaternion.identity) as GameObject;
+        go.transform.SetParent(selectedTileObj.transform);
     }
     private void ShowTileUI()
     {
