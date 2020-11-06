@@ -43,14 +43,13 @@ public class LevelEditor : MonoBehaviour
         else if (Input.GetMouseButtonUp(0))
         {
             if (tapTimer + maxTapLength < Time.time) { return; }
+
             RaycastHit hit;
 
             Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out hit);
 
             if (hit.transform != null)
             {
-                Debug.Log(hit.transform.position.x + "   " + hit.transform.position.z);
-
                 Vector2Int tapPos = new Vector2Int((int)hit.transform.position.x, (int)hit.transform.position.z);
 
                 //if any multi set options are selected
@@ -74,7 +73,7 @@ public class LevelEditor : MonoBehaviour
                     if (tapPos == selectedPos)
                     {
                         HideTileUI();
-                        tapPos = Vector2Int.zero;
+                        selectedPos = Vector2Int.zero;
                     }
                     else
                     {
