@@ -10,9 +10,9 @@ public class CameraController : MonoBehaviour
     public float zoomSens = 0.5f;
     public float rotateSens = 3;
     public float maxZoom = 10f;
-    public float scrollThreshold = 0.01f;   
+    public float scrollThreshold = 0.01f;
 
-    Vector3 touchStart;
+    private Vector3 touchStart;
     private Vector3 oldMousePos;
     private bool isTopDown;
 

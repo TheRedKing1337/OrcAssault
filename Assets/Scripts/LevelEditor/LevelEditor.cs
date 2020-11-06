@@ -12,6 +12,13 @@ public class LevelEditor : MonoBehaviour
     public Dropdown typeDropdown;
     public Dropdown decoDropdown;
 
+    public InputField multiHeightSlider;
+    public Dropdown multiTypeDropdown;
+    public Dropdown multiDecoDropdown;
+
+    public ToggleGroup multiSetGroup;
+    public Toggle[] multiSetToggles;
+
     private Vector2Int selectedPos;
     private Tile selectedTile;
     private GameObject selectedTileObj;
@@ -46,35 +53,56 @@ public class LevelEditor : MonoBehaviour
 
                 Vector2Int tapPos = new Vector2Int((int)hit.transform.position.x, (int)hit.transform.position.z);
 
-                if (tapPos == selectedPos)
+                //if any multi set options are selected
+                if (multiSetGroup.AnyTogglesOn())
                 {
-                    HideTileUI();
-                    tapPos = Vector2Int.zero;
+                    if (multiSetToggles[0].isOn)
+                    {
+                        SetHeight(tapPos, float.Parse(multiHeightSlider.text));
+                    }
+                    else if (multiSetToggles[1].isOn)
+                    {
+                        SetTileType(tapPos, (Tile.TileType)multiTypeDropdown.value);
+                    }
+                    else if (multiSetToggles[2].isOn)
+                    {
+                        SetDecoType(tapPos, (Tile.TileObject)multiDecoDropdown.value);
+                    }
                 }
                 else
                 {
-                    ShowTileUI();
-                    selectedPos = tapPos;
-                }
-                selectedTile = WorldManager.Instance.world[selectedPos.x, selectedPos.y];
-                selectedTileObj = WorldManager.Instance.pillars[selectedPos.x, selectedPos.y];
+                    if (tapPos == selectedPos)
+                    {
+                        HideTileUI();
+                        tapPos = Vector2Int.zero;
+                    }
+                    else
+                    {
+                        ShowTileUI();
+                        selectedPos = tapPos;
+                    }
+                    selectedTile = WorldManager.Instance.world[selectedPos.x, selectedPos.y];
+                    selectedTileObj = WorldManager.Instance.pillars[selectedPos.x, selectedPos.y];
 
-                //isSettingValues makes the system skip the onValueChanged event
-                isSettingValues = true;
-                heightSlider.value = selectedTile.height;
-                typeDropdown.value = (int)selectedTile.tileType;
-                decoDropdown.value = (int)selectedTile.tileObject;
-                isSettingValues = false;
+                    //isSettingValues makes the system skip the onValueChanged event
+                    isSettingValues = true;
+                    heightSlider.value = selectedTile.height;
+                    typeDropdown.value = (int)selectedTile.tileType;
+                    decoDropdown.value = (int)selectedTile.tileObject;
+                    isSettingValues = false;
+                }
             }
         }
     }
     private void OnHeightChanged()
     {
         if (isSettingValues) { return; }
-        selectedTile.height = heightSlider.value;
-        selectedTileObj.transform.position = new Vector3(selectedTileObj.transform.position.x, selectedTile.height, selectedTileObj.transform.position.z);
 
-        WorldManager.Instance.world[selectedPos.x, selectedPos.y] = selectedTile;
+        SetHeight(selectedPos, heightSlider.value);
+        //selectedTile.height = heightSlider.value;
+        //selectedTileObj.transform.position = new Vector3(selectedTileObj.transform.position.x, selectedTile.height, selectedTileObj.transform.position.z);
+
+        //WorldManager.Instance.world[selectedPos.x, selectedPos.y] = selectedTile;
     }
     private void OnTypeChanged()
     {
@@ -87,6 +115,12 @@ public class LevelEditor : MonoBehaviour
         if (isSettingValues) { return; }
 
         SetDecoType(selectedPos, (Tile.TileObject)decoDropdown.value);
+    }
+    private void SetHeight(Vector2Int pos, float height)
+    {
+        WorldManager.Instance.world[pos.x, pos.y].height = height;
+        GameObject tileObj = WorldManager.Instance.pillars[pos.x, pos.y];
+        tileObj.transform.position = new Vector3(tileObj.transform.position.x, height, tileObj.transform.position.z);
     }
     private void SetTileType(Vector2Int pos, Tile.TileType tileType)
     {
