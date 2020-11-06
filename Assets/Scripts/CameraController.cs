@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class CameraController : MonoBehaviour
 {
@@ -13,10 +14,13 @@ public class CameraController : MonoBehaviour
 
     Vector3 touchStart;
     private Vector3 oldMousePos;
+    private bool isTopDown;
 
     // Update is called once per frame
     void Update()
     {
+        if (EventSystem.current.currentSelectedGameObject != null) { return; }
+
         if (Input.touchCount > 0){
             Touch touch = Input.GetTouch(0);
             if (Input.touchCount == 2)
@@ -104,5 +108,16 @@ public class CameraController : MonoBehaviour
                 oldMousePos = mousePos;
             }
         }
+    }
+    public void ToggleTopDownView(){
+        if (isTopDown)
+        {
+            transform.GetChild(0).Rotate(new Vector3(-45, 0, 0));
+        }
+        else
+        {
+            transform.GetChild(0).Rotate(new Vector3(45, 0, 0));
+        }
+        isTopDown = !isTopDown;
     }
 }

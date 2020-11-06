@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 public class LevelEditor : MonoBehaviour
 {
@@ -26,6 +27,8 @@ public class LevelEditor : MonoBehaviour
 
     void Update()
     {
+        if (EventSystem.current.currentSelectedGameObject != null) { return; }
+
         if (Input.GetMouseButtonDown(0))
         {
             tapTimer = Time.time;
@@ -43,7 +46,6 @@ public class LevelEditor : MonoBehaviour
 
                 Vector2Int tapPos = new Vector2Int((int)hit.transform.position.x, (int)hit.transform.position.z);
 
-                //GameObject Obj =
                 if (tapPos == selectedPos)
                 {
                     HideTileUI();
@@ -55,7 +57,7 @@ public class LevelEditor : MonoBehaviour
                     selectedPos = tapPos;
                 }
                 selectedTile = WorldManager.Instance.world[selectedPos.x, selectedPos.y];
-                selectedTileObj = WorldManager.Instance.pillars[selectedPos.x, selectedPos.y].transform.parent.gameObject;
+                selectedTileObj = WorldManager.Instance.pillars[selectedPos.x, selectedPos.y];
 
                 //isSettingValues makes the system skip the onValueChanged event
                 isSettingValues = true;
@@ -68,38 +70,64 @@ public class LevelEditor : MonoBehaviour
     }
     private void OnHeightChanged()
     {
-        if(isSettingValues) { return; }
+        if (isSettingValues) { return; }
         selectedTile.height = heightSlider.value;
         selectedTileObj.transform.position = new Vector3(selectedTileObj.transform.position.x, selectedTile.height, selectedTileObj.transform.position.z);
+
+        WorldManager.Instance.world[selectedPos.x, selectedPos.y] = selectedTile;
     }
-    private void OnTypeChanged() {
+    private void OnTypeChanged()
+    {
         if (isSettingValues) { return; }
-        selectedTile.tileType = (Tile.TileType)typeDropdown.value;
 
-        if (selectedTileObj.transform.childCount > 0)
-        {
-            Destroy(selectedTileObj.transform.GetChild(0).gameObject);
-        }
-
-        if(selectedTile.tileType == Tile.TileType.empty){ return; }
-
-        GameObject go = Instantiate(Resources.Load(selectedTile.tileType.ToString()), new Vector3(selectedPos.x, selectedTile.height, selectedPos.y), Quaternion.identity) as GameObject;
-        go.transform.SetParent(selectedTileObj.transform);
+        SetTileType(selectedPos, (Tile.TileType)typeDropdown.value);
     }
     private void OnDecoChanged()
     {
         if (isSettingValues) { return; }
-        selectedTile.tileObject = (Tile.TileObject)decoDropdown.value;
 
-        if (selectedTileObj.transform.childCount > 1)
+        SetDecoType(selectedPos, (Tile.TileObject)decoDropdown.value);
+    }
+    private void SetTileType(Vector2Int pos, Tile.TileType tileType)
+    {
+        WorldManager.Instance.world[pos.x, pos.y].tileType = tileType;
+        Tile tile = WorldManager.Instance.world[pos.x, pos.y];
+        GameObject tileObj = WorldManager.Instance.pillars[pos.x, pos.y];
+        //if wasnt empty delete old tile       
+        if (tileObj.transform.childCount > 0)
         {
-            Destroy(selectedTileObj.transform.GetChild(1).gameObject);
+            Destroy(tileObj.transform.GetChild(0).gameObject);
         }
 
-        if(selectedTile.tileObject == Tile.TileObject.empty){ return; }
+        if (tile.tileType == Tile.TileType.empty) { SetDecoType(pos, Tile.TileObject.empty); return; }
 
-        GameObject go = Instantiate(Resources.Load(selectedTile.tileObject.ToString()), new Vector3(selectedPos.x, selectedTile.height, selectedPos.y), Quaternion.identity) as GameObject;
-        go.transform.SetParent(selectedTileObj.transform);
+        GameObject go = Instantiate(Resources.Load(tile.tileType.ToString()), new Vector3(pos.x, tile.height, pos.y), Quaternion.identity) as GameObject;
+        go.transform.SetParent(tileObj.transform);
+
+        WorldManager.Instance.world[pos.x, pos.y] = tile;
+
+        if (WorldManager.Instance.world[pos.x, pos.y].tileObject != Tile.TileObject.empty)
+        {
+            SetDecoType(pos, tile.tileObject);
+        }
+    }
+    private void SetDecoType(Vector2Int pos, Tile.TileObject tileDeco)
+    {
+        WorldManager.Instance.world[pos.x, pos.y].tileObject = tileDeco;
+        Tile tile = WorldManager.Instance.world[pos.x, pos.y];
+        GameObject tileObj = WorldManager.Instance.pillars[pos.x, pos.y];
+
+        if (tileObj.transform.childCount > 1)
+        {
+            Destroy(tileObj.transform.GetChild(1).gameObject);
+        }
+
+        if (tile.tileObject == Tile.TileObject.empty) { return; }
+
+        GameObject go = Instantiate(Resources.Load(tile.tileObject.ToString()), new Vector3(pos.x, tile.height, pos.y), Quaternion.identity) as GameObject;
+        go.transform.SetParent(tileObj.transform);
+
+        WorldManager.Instance.world[pos.x, pos.y] = tile;
     }
     private void ShowTileUI()
     {

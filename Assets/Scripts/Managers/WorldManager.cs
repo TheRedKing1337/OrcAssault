@@ -41,7 +41,8 @@ public class WorldManager : MonoSingleton<WorldManager>
     }
 
     #region Testing functions
-    public void ReloadLevel(){
+    public void ReloadLevel()
+    {
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
     public void SkipWorldAnim()
@@ -59,7 +60,7 @@ public class WorldManager : MonoSingleton<WorldManager>
         {
             for (int y = 0; y < worldSizeY; y++)
             {
-                pillars[x, y].SetActive(true);
+                pillars[x, y].transform.GetChild(0).gameObject.SetActive(true);
                 pillars[x, y].transform.position = new Vector3(pillars[x, y].transform.position.x, world[x, y].height, pillars[x, y].transform.position.z);
             }
         }
@@ -75,7 +76,8 @@ public class WorldManager : MonoSingleton<WorldManager>
         }
         TurnManager.Instance.phase = TurnManager.Phases.playerMove;
     }
-    public void CombineMeshes(){
+    public void CombineMeshes()
+    {
         for (int i = 0; i < meshCombiners.Length; i++)
         {
             meshCombiners[i].CombineMesh();
@@ -84,13 +86,13 @@ public class WorldManager : MonoSingleton<WorldManager>
     public bool CanNavigate(Vector2Int pos)
     {
         //check if is bounds of array
-        if (pos.x > worldSizeX-1 || pos.x < 0 || pos.y > worldSizeY-1 || pos.y < 0) return false;
+        if (pos.x > worldSizeX - 1 || pos.x < 0 || pos.y > worldSizeY - 1 || pos.y < 0) return false;
         return world[pos.x, pos.y].canNavigate;
     }
     public float GetHeight(Vector2Int pos)
     {
         if (pos.x > worldSizeX - 1 || pos.x < 0 || pos.y > worldSizeY - 1 || pos.y < 0) return 0;
-        return world[pos.x,pos.y].height;
+        return world[pos.x, pos.y].height;
     }
     IEnumerator GenWorld(bool skipAnims, bool combineMeshes)
     {
@@ -110,6 +112,8 @@ public class WorldManager : MonoSingleton<WorldManager>
         decoObject.AddComponent<MeshRenderer>();
         meshCombiners[1] = decoObject.AddComponent<MeshCombiner>();
 
+        bool isLevelEditor = SceneManager.GetActiveScene() == SceneManager.GetSceneByName("LevelEditor");
+
         for (int x = 0; x < worldSizeX; x++)
         {
             for (int y = 0; y < worldSizeY; y++)
@@ -121,19 +125,27 @@ public class WorldManager : MonoSingleton<WorldManager>
 
                 world[x, y] = new Tile(perlinValue, Tile.TileType.grassTile, obj, true);
 
+                GameObject parent = new GameObject(x + "|" + y);
+
+                if (isLevelEditor)
+                {
+                    parent.AddComponent<BoxCollider>().center = new Vector3(0, -0.5f, 0);
+                }
+
+                parent.transform.position = new Vector3(x, 0, y);
                 GameObject go = Instantiate(Resources.Load(world[x, y].tileType.ToString()), new Vector3(x, 0, y), Quaternion.identity) as GameObject;
-                go.transform.SetParent(tileObject.transform);
-                go.name = x + "|" + y;
+                parent.transform.SetParent(tileObject.transform);
+                go.transform.SetParent(parent.transform);
                 //LerpObject toMove = new LerpObject(go.transform, world[x, y].height);
                 //moveDownList.Add(toMove);
 
-                go.transform.GetChild(0).gameObject.SetActive(false);
-                pillars[x, y] = go.transform.GetChild(0).gameObject;
+                go.SetActive(false);
+                pillars[x, y] = parent;
 
                 if (world[x, y].tileObject != Tile.TileObject.empty)
                 {
-                    GameObject deco = Instantiate(Resources.Load(world[x, y].tileObject.ToString()), new Vector3(x, world[x, y].height, y), Quaternion.identity) as GameObject;
-                    deco.transform.SetParent(go.transform);
+                    GameObject deco = Instantiate(Resources.Load(world[x, y].tileObject.ToString()), new Vector3(x, 0, y), Quaternion.identity) as GameObject;
+                    deco.transform.SetParent(parent.transform);
 
                     deco.transform.localScale = Vector3.zero;
                     //LerpObject toGrow = new LerpObject(deco.transform, world[x, y].height);
@@ -157,7 +169,7 @@ public class WorldManager : MonoSingleton<WorldManager>
 
         FinishPlacement();
 
-        if (combineMeshes)   
+        if (combineMeshes)
         {
             CombineMeshes();
         }
@@ -217,7 +229,8 @@ public class WorldManager : MonoSingleton<WorldManager>
 
         yield break;
     }
-    int GetSmallest(int a, int b){
+    int GetSmallest(int a, int b)
+    {
         return (a > b) ? b : a;
     }
     int GetLargest(int a, int b)
@@ -232,18 +245,19 @@ public class WorldManager : MonoSingleton<WorldManager>
             {
                 //THREAD BELOW
                 //if is first time in loop, enable gameobject
-                if(pillarList[i].lerpAmount == 0){
-                    pillarList[i].tf.gameObject.SetActive(true);
+                if (pillarList[i].lerpAmount == 0)
+                {
+                    pillarList[i].tf.GetChild(0).gameObject.SetActive(true);
                 }
-                    ////lerp to pos
-                    pillarList[i].lerpAmount += Time.deltaTime * 0.5f;
+                ////lerp to pos
+                pillarList[i].lerpAmount += Time.deltaTime * 0.5f;
                 if (pillarList[i].lerpAmount > 1)
                 {
                     pillarList.RemoveAt(i);
                     continue;
                 }
                 float newHeight = Mathf.Lerp(0, pillarList[i].height, pillarList[i].lerpAmount);
-                pillarList[i].tf.position = new Vector3(pillarList[i].tf.position.x, newHeight, pillarList[i].tf.position.z);                
+                pillarList[i].tf.position = new Vector3(pillarList[i].tf.position.x, newHeight, pillarList[i].tf.position.z);
             }
             yield return null;
         }
@@ -252,7 +266,8 @@ public class WorldManager : MonoSingleton<WorldManager>
     IEnumerator AnimateDecos()
     {
         //wait for first object to be added to list, might not happen first frame
-        while (decoList.Count == 0){
+        while (decoList.Count == 0)
+        {
             yield return null;
         }
         while (decoList.Count > 0)
@@ -268,7 +283,7 @@ public class WorldManager : MonoSingleton<WorldManager>
 
                 float lerpValue = Mathf.Lerp(0, 1, decoList[i].lerpAmount);
 
-                decoList[i].tf.localScale = new Vector3(lerpValue, lerpValue, lerpValue);                
+                decoList[i].tf.localScale = new Vector3(lerpValue, lerpValue, lerpValue);
             }
             yield return null;
         }
@@ -277,11 +292,11 @@ public class WorldManager : MonoSingleton<WorldManager>
         yield break;
     }
     public class LerpObject
-    { 
-        public Transform tf; 
-        public float height; 
-        public float lerpAmount; 
-        public LerpObject(Transform tf, float height) { this.tf = tf; this.height = height; this.lerpAmount = 0; } 
+    {
+        public Transform tf;
+        public float height;
+        public float lerpAmount;
+        public LerpObject(Transform tf, float height) { this.tf = tf; this.height = height; this.lerpAmount = 0; }
     }
     #endregion
 }
