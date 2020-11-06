@@ -81,7 +81,7 @@ public class LevelEditor : MonoBehaviour
                         selectedPos = tapPos;
                     }
                     selectedTile = WorldManager.Instance.world[selectedPos.x, selectedPos.y];
-                    selectedTileObj = WorldManager.Instance.pillars[selectedPos.x, selectedPos.y];
+                    selectedTileObj = WorldManager.Instance.GetTiles()[selectedPos.x, selectedPos.y];
 
                     //isSettingValues makes the system skip the onValueChanged event
                     isSettingValues = true;
@@ -118,14 +118,14 @@ public class LevelEditor : MonoBehaviour
     private void SetHeight(Vector2Int pos, float height)
     {
         WorldManager.Instance.world[pos.x, pos.y].height = height;
-        GameObject tileObj = WorldManager.Instance.pillars[pos.x, pos.y];
+        GameObject tileObj = WorldManager.Instance.GetTiles()[pos.x, pos.y];
         tileObj.transform.position = new Vector3(tileObj.transform.position.x, height, tileObj.transform.position.z);
     }
     private void SetTileType(Vector2Int pos, Tile.TileType tileType)
     {
         WorldManager.Instance.world[pos.x, pos.y].tileType = tileType;
         Tile tile = WorldManager.Instance.world[pos.x, pos.y];
-        GameObject tileObj = WorldManager.Instance.pillars[pos.x, pos.y];
+        GameObject tileObj = WorldManager.Instance.GetTiles()[pos.x, pos.y];
         //if wasnt empty delete old tile       
         if (tileObj.transform.childCount > 0)
         {
@@ -148,7 +148,7 @@ public class LevelEditor : MonoBehaviour
     {
         WorldManager.Instance.world[pos.x, pos.y].tileObject = tileDeco;
         Tile tile = WorldManager.Instance.world[pos.x, pos.y];
-        GameObject tileObj = WorldManager.Instance.pillars[pos.x, pos.y];
+        GameObject tileObj = WorldManager.Instance.GetTiles()[pos.x, pos.y];
 
         if (tileObj.transform.childCount > 1)
         {

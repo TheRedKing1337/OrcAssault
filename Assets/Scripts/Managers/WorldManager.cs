@@ -1,5 +1,7 @@
-﻿using System.Collections;
+﻿using Newtonsoft.Json;
+using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -19,22 +21,12 @@ public class WorldManager : MonoSingleton<WorldManager>
     private GameObject tileObject;
     private GameObject decoObject;
 
-    public GameObject[,] pillars;
+    private GameObject[,] pillars;
     private GameObject[,] decos;
 
     private List<LerpObject> pillarList = new List<LerpObject>();
     private List<LerpObject> decoList = new List<LerpObject>();
 
-    //[ContextMenu("Reload World")]
-    //private void ReloadInEditor()
-    //{
-    //    //remove old versions
-    //    DestroyImmediate(GameObject.Find("Tiles"));
-    //    DestroyImmediate(GameObject.Find("Decorations"));
-
-    //    //build world and skip anims and dont combine meshes
-    //    StartCoroutine(GenWorld(true, false));
-    //}
     private void Start()
     {
         StartCoroutine(GenWorld(skipAnimation, combineMeshes));
@@ -299,4 +291,25 @@ public class WorldManager : MonoSingleton<WorldManager>
         public LerpObject(Transform tf, float height) { this.tf = tf; this.height = height; this.lerpAmount = 0; }
     }
     #endregion
+
+    #region Save/Loading
+    public void WriteToFile(int levelIndex)
+    {
+        //string json = JsonUtility.ToJson(this, true);
+
+        string json = JsonConvert.SerializeObject(world);
+
+        string path = Application.dataPath + "/Levels/" + levelIndex;
+
+        File.WriteAllText(path, json);
+    }
+    public void LoadFromFile(int levelIndex)
+    {
+        
+    }
+    #endregion
+    public GameObject[,] GetTiles()
+    {
+        return pillars;
+    }
 }
