@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -29,7 +30,7 @@ public class WorldManager : MonoSingleton<WorldManager>
 
     private void Start()
     {
-        StartCoroutine(GenWorld(skipAnimation, combineMeshes));
+        //FillWorldPerlin();       
     }
 
     #region Testing functions
@@ -86,23 +87,48 @@ public class WorldManager : MonoSingleton<WorldManager>
         if (pos.x > worldSizeX - 1 || pos.x < 0 || pos.y > worldSizeY - 1 || pos.y < 0) return 0;
         return world[pos.x, pos.y].height;
     }
-    IEnumerator GenWorld(bool skipAnims, bool combineMeshes)
+    public void FillWorldPerlin()
     {
         world = new Tile[worldSizeX, worldSizeY];
+        for (int x = 0; x < worldSizeX; x++)
+        {
+            for (int y = 0; y < worldSizeY; y++)
+            {
+                float perlinValue = Mathf.PerlinNoise(x / 10f, y / 10f) * 10 - 4;
+
+                Tile.TileObject obj = (Tile.TileObject)Random.Range(0, 5);
+
+                world[x, y] = new Tile(perlinValue, Tile.TileType.grassTile, obj, true);
+            }
+        }
+        StartCoroutine(GenWorld(skipAnimation, combineMeshes));
+    }
+    IEnumerator GenWorld(bool skipAnims, bool combineMeshes)
+    {
         pillars = new GameObject[worldSizeX, worldSizeY];
         decos = new GameObject[worldSizeX, worldSizeY];
 
         meshCombiners = new MeshCombiner[2];
 
-        tileObject = new GameObject("Tiles");
-        tileObject.AddComponent<MeshFilter>();
-        tileObject.AddComponent<MeshRenderer>();
-        meshCombiners[0] = tileObject.AddComponent<MeshCombiner>();
+        if (tileObject == null)
+        {
+            tileObject = new GameObject("Tiles");
+            tileObject.AddComponent<MeshFilter>();
+            tileObject.AddComponent<MeshRenderer>();
+            meshCombiners[0] = tileObject.AddComponent<MeshCombiner>();
 
-        decoObject = new GameObject("Decorations");
-        decoObject.AddComponent<MeshFilter>();
-        decoObject.AddComponent<MeshRenderer>();
-        meshCombiners[1] = decoObject.AddComponent<MeshCombiner>();
+            decoObject = new GameObject("Decorations");
+            decoObject.AddComponent<MeshFilter>();
+            decoObject.AddComponent<MeshRenderer>();
+            meshCombiners[1] = decoObject.AddComponent<MeshCombiner>();
+        }
+        else
+        {
+            for (int i = 0; i < tileObject.transform.childCount; i++)
+            {
+                Destroy(tileObject.transform.GetChild(i).gameObject);
+            }
+        }
 
         bool isLevelEditor = SceneManager.GetActiveScene() == SceneManager.GetSceneByName("LevelEditor");
 
@@ -110,13 +136,7 @@ public class WorldManager : MonoSingleton<WorldManager>
         {
             for (int y = 0; y < worldSizeY; y++)
             {
-                //replace this with loading from lvl file   -4 to bring terrain to around 0
-                float perlinValue = Mathf.PerlinNoise(x / 10f, y / 10f) * 10 - 4;
-
-                Tile.TileObject obj = (Tile.TileObject)Random.Range(0, 5);
-
-                world[x, y] = new Tile(perlinValue, Tile.TileType.grassTile, obj, true);
-
+                //replace this with loading from lvl file   -4 to bring terrain to around 0              
                 GameObject parent = new GameObject(x + "|" + y);
 
                 if (isLevelEditor)
@@ -293,19 +313,43 @@ public class WorldManager : MonoSingleton<WorldManager>
     #endregion
 
     #region Save/Loading
-    public void WriteToFile(int levelIndex)
+    public void WriteToFileBinary(int levelIndex)
     {
-        //string json = JsonUtility.ToJson(this, true);
+        if(world == null){ Debug.Log("Cannot save empty world"); return; }
 
-        string json = JsonConvert.SerializeObject(world);
+        string path = Application.persistentDataPath + "/Levels/" + levelIndex;
 
-        string path = Application.dataPath + "/Levels/" + levelIndex;
+        if(!Directory.Exists(Application.persistentDataPath + "/Levels"))
+        {
+            Directory.CreateDirectory(Application.persistentDataPath + "/Levels");
+        }
 
-        File.WriteAllText(path, json);
+        FileStream dataStream = new FileStream(path, FileMode.Create);
+
+        BinaryFormatter converter = new BinaryFormatter();
+        converter.Serialize(dataStream, world);
+
+        dataStream.Close();
+
+        Debug.Log("Saved data to binary");
     }
-    public void LoadFromFile(int levelIndex)
+    public void LoadFromFileBinary(int levelIndex)
     {
-        
+        string path = Application.persistentDataPath + "/Levels/" + levelIndex;
+
+        if(!File.Exists(path)){ Debug.Log("No save file with that index found"); return; }
+
+        FileStream dataStream = new FileStream(path, FileMode.Open);
+
+        BinaryFormatter converter = new BinaryFormatter();
+
+        //Debug.Log((converter.Deserialize(dataStream) as Tile[,])[0, 0].height);
+
+        world = converter.Deserialize(dataStream) as Tile[,];
+
+        dataStream.Close();
+
+        StartCoroutine(GenWorld(skipAnimation, combineMeshes));
     }
     #endregion
     public GameObject[,] GetTiles()
