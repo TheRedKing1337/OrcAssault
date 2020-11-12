@@ -16,6 +16,7 @@ public class WorldManager : MonoSingleton<WorldManager>
     public Tile[,] world;
 
     private MeshCombiner[] meshCombiners;
+    private string dataPath;
 
     //private System.Diagnostics.Stopwatch watch = new System.Diagnostics.Stopwatch();
 
@@ -30,6 +31,13 @@ public class WorldManager : MonoSingleton<WorldManager>
 
     private void Start()
     {
+        #if UNITY_ANDROID
+            dataPath = "jar:file://" + Application.dataPath + "!/assets";
+        #endif
+
+        #if UNITY_STANDALONE || UNITY_EDITOR
+            dataPath = Application.dataPath + "/StreamingAssets";
+        #endif
         //FillWorldPerlin();       
     }
 
@@ -315,13 +323,13 @@ public class WorldManager : MonoSingleton<WorldManager>
     #region Save/Loading
     public void WriteToFileBinary(int levelIndex)
     {
-        if(world == null){ Debug.Log("Cannot save empty world"); return; }
+        if (world == null) { Debug.Log("Cannot save empty world"); return; }
 
-        string path = Application.persistentDataPath + "/Levels/" + levelIndex;
+        string path = dataPath + "/Levels/" + levelIndex;
 
-        if(!Directory.Exists(Application.persistentDataPath + "/Levels"))
+        if (!Directory.Exists(dataPath + "/Levels"))
         {
-            Directory.CreateDirectory(Application.persistentDataPath + "/Levels");
+            Directory.CreateDirectory(dataPath + "/Levels");
         }
 
         FileStream dataStream = new FileStream(path, FileMode.Create);
@@ -335,15 +343,13 @@ public class WorldManager : MonoSingleton<WorldManager>
     }
     public void LoadFromFileBinary(int levelIndex)
     {
-        string path = Application.persistentDataPath + "/Levels/" + levelIndex;
+        string path = dataPath + "/Levels/" + levelIndex;
 
-        if(!File.Exists(path)){ Debug.Log("No save file with that index found"); return; }
+        if (!File.Exists(path)) { Debug.Log("No save file with that index found"); return; }
 
         FileStream dataStream = new FileStream(path, FileMode.Open);
 
         BinaryFormatter converter = new BinaryFormatter();
-
-        //Debug.Log((converter.Deserialize(dataStream) as Tile[,])[0, 0].height);
 
         world = converter.Deserialize(dataStream) as Tile[,];
 
